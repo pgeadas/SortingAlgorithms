@@ -40,7 +40,7 @@ public class TarefaB2_TP4 {
 			}
 		}
 
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < EXECUTIONS ; i++) {
 			array_aux = Arrays.copyOf(array, array.length);
 			long startTime = System.nanoTime();
 			// System.out.println("ST: "+startTime);
