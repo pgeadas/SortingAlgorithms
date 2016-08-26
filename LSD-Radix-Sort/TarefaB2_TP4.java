@@ -6,14 +6,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 
-public class TarefaB2_TP4 {
+public class TarefaB1_TP4 {
 
 	public static int EXECUTIONS = 1;
-	public static String CHART_NAME = "LSD-Radix-Sort";
+	public static String CHART_NAME = "Three-way-Radix-Sort";
 	public static boolean PRINT_SORTED_LIST = true;
 
-	public static void main(String Args[]) throws NumberFormatException, IOException {
-		int i, num, j, max = 0;
+	public static void main(String[] args) throws NumberFormatException, IOException {
+		int i, num;
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		num = Integer.parseInt(in.readLine());
@@ -22,28 +22,16 @@ public class TarefaB2_TP4 {
 		String array_aux[] = new String[num];
 		long result = 0;
 
-		for (i = 0; i < num; i++) /* read keys to array, in upper case */
-		{
-			array[i] = in.readLine().toUpperCase();
-			if (array[i].length() > max) {
-				max = array[i].length();
-			}
-		}
-
-		/* add spaces at the end of the string, so all have same length */
+		/* read keys to array, in upper case */
 		for (i = 0; i < num; i++) {
-			if (array[i].length() < max) {
-				for (j = array[i].length(); j < max; j++) {
-					array[i] += ' ';
-				}
-			}
+			array[i] = in.readLine().toUpperCase();
 		}
 
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < 50; i++) {
 			array_aux = Arrays.copyOf(array, array.length);
 			long startTime = System.nanoTime();
 			// System.out.println("ST: "+startTime);
-			array_aux = LSDSort(array_aux, max - 1, num);
+			array_aux = RadixSort(array_aux, 0, array_aux.length - 1, 0);
 			long estimatedTime = (System.nanoTime() - startTime);
 			// System.out.println("ET: "+estimatedTime);
 			result += estimatedTime;
@@ -61,42 +49,100 @@ public class TarefaB2_TP4 {
 				System.out.println(array[i]);
 			}
 		}
-
 	}
 
-	public static String[] LSDSort(String afinal[], int max, int num) {
-		int[] conta = new int[27];
-		String aux = " ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	static String[] RadixSort(String a[], int left, int right, int d) {
+		if (right <= left)
+			return a;
 
-		while (max >= 0) {
-			for (int i = 0; i < 27; i++) {
-				conta[i] = 0;
+		pivot(a, left, right, (left + right) / 2); // acha pivot
+
+		String pivot = a[right];
+
+		int i = left - 1, j = right, p = left - 1, q = right, k;
+
+		// while they do not cross
+		while (i < j) {
+			// continues until it finds a word with char > pivot
+			while (less(a[++i], pivot, d))
+				;
+			// continues until it finds a word with char < pivot
+			while (less(pivot, a[--j], d)) {
+				if (j == left)
+					break;
 			}
+			// if they cross
+			if (i > j)
+				break;
+			// swap the word found in the first while with the one found in the
+			// second while
+			swapReferences(a, i, j);
 
-			for (int i = 0; i < num; i++) {
-				conta[aux.indexOf(afinal[i].charAt(max))] += 1;
-			}
-
-			for (int i = 1; i < 27; i++) {
-				conta[i] += conta[i - 1];
-			}
-
-			String temp[] = new String[num];
-
-			for (int i = num - 1; i >= 0; i--) {
-				temp[conta[aux.indexOf(afinal[i].charAt(max))] - 1] = afinal[i];
-				conta[aux.indexOf(afinal[i].charAt(max))]--;
-			}
-			afinal = temp;
-
-			max--;
+			if (equal(a[i], pivot, d))
+				swapReferences(a, ++p, i);
+			if (equal(pivot, a[j], d))
+				swapReferences(a, --q, j);
 		}
 
-		for (int i = 0; i < num; i++) {
-			while (afinal[i].charAt(afinal[i].length() - 1) == ' ') {
-				afinal[i] = afinal[i].substring(0, afinal[i].length() - 1);
-			}
+		// when the first d+1 chars of the keys match
+		if (p == q) {
+			// if the pivot has still more chars
+			if (pivot.length() > d)
+				RadixSort(a, left, right, d + 1);
 		}
-		return afinal;
+		if (p == q)
+			return a;
+
+		if (less(a[i], pivot, d))
+			i++;
+		// compares the chars of the smaller words and sorts
+		for (k = left; k <= p; k++, j--)
+			swapReferences(a, k, j);
+		// compares the chars of the bigger words and sorts
+		for (k = right; k >= q; k--, i++)
+			swapReferences(a, k, i);
+
+		RadixSort(a, left, j, d); // smaller
+
+		if ((i == right) && (equal(a[i], pivot, d)))
+			i++;
+		if (pivot.length() >= d)
+			RadixSort(a, j + 1, i - 1, d + 1); // middle
+
+		RadixSort(a, i, right, d); // bigger
+		return a;
+	}
+
+	public static void swapReferences(String[] array, int i, int j) {
+		String temp = array[i];
+		array[i] = array[j];
+		array[j] = temp;
+	}
+
+	public static boolean less(String s, String t, int d) {
+		if (t.length() <= d)
+			return false;
+		if (s.length() <= d)
+			return true;
+		return s.charAt(d) < t.charAt(d);
+	}
+
+	public static boolean equal(String s, String t, int d) {
+		return !less(s, t, d) && !less(t, s, d);
+	}
+
+	public static void pivot(String[] array, int l, int r, int m) {
+		if (array[l].equals(array[m])) {
+			swapReferences(array, l, m);
+		}
+
+		if (array[l].equals(array[r])) {
+			swapReferences(array, l, r);
+		}
+
+		if (array[m].equals(array[r])) {
+			swapReferences(array, m, r);
+		}
+		swapReferences(array, m, r);
 	}
 }
